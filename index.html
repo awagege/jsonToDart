@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>json to dart by xiankaiqun</title>
+  </head>
+
+  <script>
+    function HTMLEncode(html) {
+      var temp = document.createElement("div")
+      temp.textContent != null
+        ? (temp.textContent = html)
+        : (temp.innerText = html)
+      var output = temp.innerHTML
+      temp = null
+      return output
+    }
+    function HTMLDecode(text) {
+      var temp = document.createElement("div")
+      temp.innerHTML = text
+      var output = temp.innerText || temp.textContent
+      temp = null
+      return output
+    }
+    //首字母大写
+    function upper(data) {
+      return data.replace(/\b\w+\b/g, function(word) {
+        return word.substring(0, 1).toUpperCase() + word.substring(1)
+      })
+    }
+
+    function isDouble(data) {
+      return data + ".0" != data
+    }
+    //判断类型
+    function dateType(data) {
+      let back = "int"
+      if (data === null) back = "Null"
+      else if (typeof data == "undefined") back = "dynamic"
+      else if (data.constructor === Array) back = "List"
+      else if (data.constructor === Boolean) back = "bool"
+      else if (data.constructor === String) back = "String"
+      else if (data.constructor === Object) back = "Map"
+      else if (data.constructor === Number) {
+        back = isDouble(data) ? "double" : "int"
+      } else back = "dynamic"
+
+      return back
+    }
+    const className = "CatelogFindAllByParentIdModel"
+
+    function buildClass(json, thisClassName) {
+      thisClassName = upper(thisClassName)
+      let definedStr = `` //构造函数
+      let initializeStr = `` // 初始化
+      let fromJsonStr = `` //fromJson
+      let toJsonStr = `` //toJson
+      let back = ``
+      const fields = Object.keys(json)
+
+      fields.forEach(field => {
+        const _data = json[field]
+        const _dataType = dateType(_data)
+
+        // Map类型  需要递归build新的class
+        if (_dataType == "Map") {
+          const childClassName = thisClassName + upper(field)
+
+          back = back + buildClass(_data, childClassName)
+          // 定义
+          definedStr += `${upper(childClassName)}  ${field};\r\n`
+          initializeStr += `this.${field},`
+          fromJsonStr += `${field} =  json['${field}'] != null ? new ${childClassName}.fromJson(json['${field}']) : null;\r\n`
+          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+        }
+
+        // List类型且孩子为Map  需要传入list【0】递归build新的class
+        else if (_dataType == "List" && dateType(_data[0]) == "Map") {
+          const childClassName = thisClassName + upper(field)
+          back = back + buildClass(_data[0], childClassName)
+          // 定义
+          definedStr += `List<${upper(childClassName)}>  ${field};\r\n`
+          initializeStr += `this.${field},`
+          fromJsonStr += `\r\nif (json['${field}'] != null) {
+                          \r\n${field} = new List<${childClassName}>();
+                          \r\njson['${field}'].forEach((v) {
+                          \r\n${field}.add(new ${childClassName}.fromJson(v));
+                          \r\n});
+                          \r\n}\r\n`
+          toJsonStr += `\r\nif (this.${field} != null) {
+                        \r\ndata['${field}'] = this.${field}.map((v) => v.toJson()).toList();
+                        \r\n}\r\n`
+        }
+        // List类型 孩子不是Map  （一维数组）
+        else if (_dataType == "List" && dateType(_data[0]) != "Map") {
+          const childClassName = thisClassName + upper(field)
+          // console.log(field)
+
+          // 定义
+          definedStr += `List<${dateType(_data[0])}>  ${field};\r\n`
+          initializeStr += `this.${field},\r\n`
+          fromJsonStr += `${field}=json['${field}'].cast<${dateType(
+            _data[0]
+          )}>();\r\n`
+          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+        } else {
+          definedStr += `${_dataType}  ${field};\r\n`
+          initializeStr += `this.${field},\r\n`
+          fromJsonStr += `${field} = json['${field}'];\r\n`
+          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+          // console.log(fromJsonStr)
+        }
+      })
+      //构造函数
+      initializeStr = `${thisClassName}({${initializeStr}});`
+
+      //fromJson
+      fromJsonStr = `\r\n${thisClassName}.fromJson(Map<String, dynamic> json) {
+                     \r\n${fromJsonStr}
+                     \r\n}`
+
+      //toJson
+      toJsonStr = `\r\nMap<String, dynamic> toJson() {
+                   \r\nfinal Map<String, dynamic> data = new Map<String, dynamic>();
+                   \r\n${toJsonStr}
+                   \r\nreturn data;
+                   \r\n}`
+
+      back = `\r\nclass ${thisClassName}{
+              \r\n${definedStr}
+              \r\n${initializeStr}
+              \r\n${fromJsonStr}
+              \r\n${toJsonStr}
+              \r\n}
+              \r\n${back}`
+      return back
+    }
+
+    function _json2dart() {
+      try {
+        const jsonstr = document.getElementById("json").value
+        const className =
+          document.getElementById("className").value || "AutoModel"
+        const json = JSON.parse(jsonstr)
+        const back = buildClass(json, className)
+        document.getElementById("dart").value = back
+      } catch {
+        alert("error")
+      }
+    }
+    function _copydart() {
+      var Url2 = document.getElementById("dart")
+      Url2.select() // 选择对象
+      document.execCommand("Copy") // 执行浏览器复制命令
+      alert("Copy success.")
+    }
+  </script>
+  <body>
+    <div style="display: flex;flex-direction: row">
+      <textarea
+        id="json"
+        style="width: 45%;min-height: 80vh"
+        placeholder="json code.."
+      ></textarea>
+      <textarea
+        id="dart"
+        style="flex:1;min-height: 80vh;margin-left: 50px"
+        placeholder="dart code.."
+      ></textarea>
+    </div>
+
+    <div
+      style="display: flex;flex-direction: row;justify-content: center;margin:40px "
+    >
+      <input  id="className" placeholder="className.." style="margin:0 40px" />
+      <input
+        type="button"
+        onClick="_json2dart()"
+        value="json to dart"
+        style="margin:0 40px"
+      />
+      <input
+        type="button"
+        onClick="_copydart()"
+        style="margin:0 40px"
+        value="copy dart"
+      />
+    </div>
+  </body>
+</html>
