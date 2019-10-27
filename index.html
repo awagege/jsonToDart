@@ -37,7 +37,7 @@
     //判断类型
     function dateType(data) {
       let back = "int"
-      if (data === null) back = "Null"
+      if (data === null) back = "dynamic"
       else if (typeof data == "undefined") back = "dynamic"
       else if (data.constructor === Array) back = "List"
       else if (data.constructor === Boolean) back = "bool"
