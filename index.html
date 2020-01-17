@@ -1,13 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>json to dart by xiankaiqun</title>
-  </head>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+		<title>json to dart by xiankaiqun</title>
+	</head>
 
-  <script>
+	<script>
+		//下划线转驼峰
+	  function tf(str){
+	     var strArr=str.split('_');
+	        for(var i=1;i<strArr.length;i++){
+	            strArr[i]=strArr[i].charAt(0).toUpperCase()+strArr[i].substring(1);
+	        } 
+	        return strArr.join(''); 
+ 
+	  };
+	  
+	  //斜杠转驼峰
+	  function tf2(str){
+	     var strArr=str.split('/');
+	        for(var i=1;i<strArr.length;i++){
+	            strArr[i]=strArr[i].charAt(0).toUpperCase()+strArr[i].substring(1);
+	        } 
+	        return strArr.join(''); 
+	   
+	  };
+	  
+	  //首字母大写
+	  function upper(data) {
+	    return data.replace(/\b\w+\b/g, function(word) {
+	      return word.substring(0, 1).toUpperCase() + word.substring(1)
+	    })
+	  }
     function HTMLEncode(html) {
       var temp = document.createElement("div")
       temp.textContent != null
@@ -24,12 +50,7 @@
       temp = null
       return output
     }
-    //首字母大写
-    function upper(data) {
-      return data.replace(/\b\w+\b/g, function(word) {
-        return word.substring(0, 1).toUpperCase() + word.substring(1)
-      })
-    }
+   
 
     function isDouble(data) {
       return data + ".0" != data
@@ -49,8 +70,7 @@
       } else back = "dynamic"
 
       return back
-    }
-    const className = "CatelogFindAllByParentIdModel"
+    } 
 
     function buildClass(json, thisClassName) {
       thisClassName = upper(thisClassName)
@@ -67,14 +87,14 @@
 
         // Map类型  需要递归build新的class
         if (_dataType == "Map") {
-          const childClassName = thisClassName + upper(field)
+          const childClassName = thisClassName + upper(tf(field))
 
           back = back + buildClass(_data, childClassName)
           // 定义
-          definedStr += `${upper(childClassName)}  ${field};\r\n`
-          initializeStr += `this.${field},`
-          fromJsonStr += `${field} =  json['${field}'] != null ? new ${childClassName}.fromJson(json['${field}']) : null;\r\n`
-          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+          definedStr += `${upper(childClassName)}  ${tf(field)};\r\n`
+          initializeStr += `this.${tf(field)},`
+          fromJsonStr += `${tf(field)} =  json['${field}'] != null ? new ${childClassName}.fromJson(json['${field}']) : null;\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
         }
 
         // List类型且孩子为Map  需要传入list【0】递归build新的class
@@ -82,35 +102,35 @@
           const childClassName = thisClassName + upper(field)
           back = back + buildClass(_data[0], childClassName)
           // 定义
-          definedStr += `List<${upper(childClassName)}>  ${field};\r\n`
-          initializeStr += `this.${field},`
+          definedStr += `List<${upper(childClassName)}>  ${tf(field)};\r\n`
+          initializeStr += `this.${tf(field)},`
           fromJsonStr += `\r\nif (json['${field}'] != null) {
-                          \r\n${field} = new List<${childClassName}>();
+                          \r\n${tf(field)} = new List<${childClassName}>();
                           \r\njson['${field}'].forEach((v) {
-                          \r\n${field}.add(new ${childClassName}.fromJson(v));
+                          \r\n${tf(field)}.add(new ${childClassName}.fromJson(v));
                           \r\n});
                           \r\n}\r\n`
-          toJsonStr += `\r\nif (this.${field} != null) {
-                        \r\ndata['${field}'] = this.${field}.map((v) => v.toJson()).toList();
+          toJsonStr += `\r\nif (this.${tf(field)} != null) {
+                        \r\ndata['${field}'] = this.${tf(field)}.map((v) => v.toJson()).toList();
                         \r\n}\r\n`
         }
         // List类型 孩子不是Map  （一维数组）
         else if (_dataType == "List" && dateType(_data[0]) != "Map") {
-          const childClassName = thisClassName + upper(field)
+          const childClassName = thisClassName + upper(tf(field))
           // console.log(field)
 
           // 定义
-          definedStr += `List<${dateType(_data[0])}>  ${field};\r\n`
-          initializeStr += `this.${field},\r\n`
-          fromJsonStr += `${field}=json['${field}'].cast<${dateType(
+          definedStr += `List<${dateType(_data[0])}>  ${tf(field)};\r\n`
+          initializeStr += `this.${tf(field)},\r\n`
+          fromJsonStr += `${tf(field)}=json['${field}'].cast<${dateType(
             _data[0]
           )}>();\r\n`
-          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
         } else {
-          definedStr += `${_dataType}  ${field};\r\n`
-          initializeStr += `this.${field},\r\n`
-          fromJsonStr += `${field} = json['${field}'];\r\n`
-          toJsonStr += ` data['${field}'] = this.${field};\r\n`
+          definedStr += `${_dataType}  ${tf(field)};\r\n`
+          initializeStr += `this.${tf(field)},\r\n`
+          fromJsonStr += `${tf(field)} = json['${field}'];\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
           // console.log(fromJsonStr)
         }
       })
@@ -143,9 +163,9 @@
       try {
         const jsonstr = document.getElementById("json").value
         const className =
-          document.getElementById("className").value || "AutoModel"
+          document.getElementById("className").value || "Auto"
         const json = JSON.parse(jsonstr)
-        const back = buildClass(json, className)
+        const back = buildClass(json, tf2(tf(className))+'Model')
         document.getElementById("dart").value = back
       } catch {
         alert("error")
@@ -158,36 +178,16 @@
       alert("Copy success.")
     }
   </script>
-  <body>
-    <div style="display: flex;flex-direction: row">
-      <textarea
-        id="json"
-        style="width: 45%;min-height: 80vh"
-        placeholder="json code.."
-      ></textarea>
-      <textarea
-        id="dart"
-        style="flex:1;min-height: 80vh;margin-left: 50px"
-        placeholder="dart code.."
-      ></textarea>
-    </div>
+	<body>
+		<div style="display: flex;flex-direction: row">
+			<textarea id="json" style="width: 45%;min-height: 80vh" placeholder="json code.."></textarea>
+			<textarea id="dart" style="flex:1;min-height: 80vh;margin-left: 50px" placeholder="dart code.."></textarea>
+		</div>
 
-    <div
-      style="display: flex;flex-direction: row;justify-content: center;margin:40px "
-    >
-      <input  id="className" placeholder="className.." style="margin:0 40px" />
-      <input
-        type="button"
-        onClick="_json2dart()"
-        value="json to dart"
-        style="margin:0 40px"
-      />
-      <input
-        type="button"
-        onClick="_copydart()"
-        style="margin:0 40px"
-        value="copy dart"
-      />
-    </div>
-  </body>
+		<div style="display: flex;flex-direction: row;justify-content: center;margin:40px ">
+			<input id="className" placeholder="className.." style="margin:0 40px" />
+			<input type="button" onClick="_json2dart()" value="json to dart" style="margin:0 40px" />
+			<input type="button" onClick="_copydart()" style="margin:0 40px" value="copy dart" />
+		</div>
+	</body>
 </html>
