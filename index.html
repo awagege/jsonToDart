@@ -94,7 +94,7 @@
           definedStr += `${upper(childClassName)}  ${tf(field)};\r\n`
           initializeStr += `this.${tf(field)},`
           fromJsonStr += `${tf(field)} =  json['${field}'] != null ? new ${childClassName}.fromJson(json['${field}']) : null;\r\n`
-          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)._toJson()};\r\n`
         }
 
         // List类型且孩子为Map  需要传入list【0】递归build新的class
@@ -111,7 +111,7 @@
                           \r\n});
                           \r\n}\r\n`
           toJsonStr += `\r\nif (this.${tf(field)} != null) {
-                        \r\ndata['${field}'] = this.${tf(field)}.map((v) => v.toJson()).toList();
+                        \r\ndata['${field}'] = this.${tf(field)}.map((v) => v._toJson()).toList();
                         \r\n}\r\n`
         }
         // List类型 孩子不是Map  （一维数组）
@@ -125,12 +125,12 @@
           fromJsonStr += `${tf(field)}=json['${field}'].cast<${dateType(
             _data[0]
           )}>();\r\n`
-          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)}._toJson();\r\n`
         } else {
           definedStr += `${_dataType}  ${tf(field)};\r\n`
           initializeStr += `this.${tf(field)},\r\n`
           fromJsonStr += `${tf(field)} = json['${field}'];\r\n`
-          toJsonStr += ` data['${field}'] = this.${tf(field)};\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)}._toJson();\r\n`
           // console.log(fromJsonStr)
         }
       })
@@ -143,7 +143,9 @@
                      \r\n}`
 
       //toJson
-      toJsonStr = `\r\nMap<String, dynamic> toJson() {
+      toJsonStr = `
+                   \r\nMap<String, dynamic> toJson()=> _toJson();
+		   \r\nMap<String, dynamic> _toJson() {
                    \r\nfinal Map<String, dynamic> data = new Map<String, dynamic>();
                    \r\n${toJsonStr}
                    \r\nreturn data;
@@ -165,7 +167,10 @@
         const className =
           document.getElementById("className").value || "Auto"
         const json = JSON.parse(jsonstr)
-        const back = buildClass(json, tf2(tf(className))+'Model')
+        let back = buildClass(json, tf2(tf(className))+'Model')
+	
+	back+='extension extensionToJson on Object {  _toJson() => this;}'
+	      
         document.getElementById("dart").value = back
       } catch {
         alert("error")
