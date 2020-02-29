@@ -93,8 +93,8 @@
           // 定义
           definedStr += `${upper(childClassName)}  ${tf(field)};\r\n`
           initializeStr += `this.${tf(field)},`
-          fromJsonStr += `${tf(field)} =  json['${field}'] != null ? new ${childClassName}.fromJson(json['${field}']) : null;\r\n`
-          toJsonStr += ` data['${field}'] = this.${tf(field)._toJson()};\r\n`
+          fromJsonStr += `${tf(field)} = ${childClassName}.fromJson(json['${field}']??null);\r\n`
+          toJsonStr += ` data['${field}'] = this.${tf(field)}._toJson();\r\n`
         }
 
         // List类型且孩子为Map  需要传入list【0】递归build新的class
@@ -111,7 +111,7 @@
                           \r\n});
                           \r\n}\r\n`
           toJsonStr += `\r\nif (this.${tf(field)} != null) {
-                        \r\ndata['${field}'] = this.${tf(field)}.map((v) => v._toJson()).toList();
+                        \r\ndata['${field}'] = this.${tf(field)}.map((v) => v._toJson())?.toList();
                         \r\n}\r\n`
         }
         // List类型 孩子不是Map  （一维数组）
