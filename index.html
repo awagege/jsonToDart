@@ -93,7 +93,7 @@
           // 定义
           definedStr += `${upper(childClassName)}  ${tf(field)};\r\n`
           initializeStr += `this.${tf(field)},`
-          fromJsonStr += `${tf(field)} = ${childClassName}.fromJson(json['${field}']??null);\r\n`
+          fromJsonStr += `${tf(field)} = ${childClassName}.fromJson(json['${field}']??{});\r\n`
           toJsonStr += ` data['${field}'] = this.${tf(field)}._toJson();\r\n`
         }
 
